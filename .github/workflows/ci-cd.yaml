@@ -1,5 +1,5 @@
 
-name: Kubernetes CI Pipeline
+name: Kubernetes CI/CD Pipeline
 
 on:
   push:
@@ -29,15 +29,14 @@ jobs:
           test -f k8s/service.yaml
           echo "All required files exist."
 
-      - name: Validate Docker Hub username
+      - name: Set up image name
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           if [ -z "$DOCKERHUB_USERNAME" ]; then
-            echo "Error: DOCKERHUB_USERNAME secret is missing."
+            echo "Docker Hub username is missing."
             exit 1
           fi
-
           echo "IMAGE_NAME=${DOCKERHUB_USERNAME,,}/k8s-cicd-app" >> "$GITHUB_ENV"
 
       - name: Build Docker image
@@ -77,3 +76,50 @@ jobs:
         run: |
           docker push "$IMAGE_NAME:${GITHUB_SHA}"
           docker push "$IMAGE_NAME:latest"
+
+  deploy-to-kubernetes:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Windows, X64]
+
+    steps:
+      - name: Check Kubernetes access
+        shell: pwsh
+        run: |
+          kubectl config current-context
+          kubectl get nodes
+          kubectl get deployment web-app -n cicd-project
+
+      - name: Deploy image to Kind
+        shell: pwsh
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          $image = "$($env:DOCKERHUB_USERNAME.ToLower())/k8s-cicd-app:$($env:IMAGE_TAG)"
+
+          $containerName = kubectl get deployment web-app `
+            -n cicd-project `
+            -o "jsonpath={.spec.template.spec.containers[0].name}"
+
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($containerName)) {
+            throw "Could not find the web-app container."
+          }
+
+          kubectl set image deployment/web-app `
+            -n cicd-project `
+            "$($containerName)=$image"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to update the Deployment image."
+          }
+
+          kubectl rollout status deployment/web-app `
+            -n cicd-project `
+            --timeout=180s
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Kubernetes rollout failed."
+          }
+
+          kubectl get pods -n cicd-project
