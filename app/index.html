@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>KubeFlow | DevOps Dashboard</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2563eb;
+      --dark: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 7%;
+      background: white;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand { font-size: 21px; font-weight: 800; }
+    .brand span { color: var(--blue); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      font-size: 14px;
+    }
+
+    .nav-links a:hover { color: var(--blue); }
+
+    .button {
+      display: inline-block;
+      padding: 11px 18px;
+      background: var(--blue);
+      color: white;
+      border-radius: 9px;
+      font-weight: 700;
+      border: 1px solid var(--blue);
+      cursor: pointer;
+    }
+
+    .hero {
+      padding: 76px 7%;
+      background: linear-gradient(135deg, #eff6ff, #fff 70%);
+    }
+
+    .hero-content {
+      max-width: 850px;
+      margin: auto;
+      text-align: center;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 650px;
+      margin: 0 auto 26px;
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .button.secondary {
+      color: var(--dark);
+      background: white;
+      border-color: var(--border);
+    }
+
+    .section {
+      padding: 55px 7%;
+      max-width: 1250px;
+      margin: auto;
+    }
+
+    .section-heading {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .section-heading h2 {
+      font-size: clamp(24px, 3vw, 32px);
+      margin-bottom: 8px;
+    }
+
+    .section-heading p { color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: white;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px #0f172a0d;
+    }
+
+    .card-icon { font-size: 30px; }
+    .card h3 { margin: 13px 0 8px; font-size: 18px; }
+    .card p { color: var(--muted); font-size: 14px; }
+
+    .status-panel {
+      margin-top: 28px;
+      padding: 25px;
+      background: white;
+      border: 1px solid #a7f3d0;
+      border-radius: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .status-title { font-weight: 800; font-size: 19px; }
+    .status-message { color: var(--muted); font-size: 14px; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      color: #047857;
+      background: #d1fae5;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .metrics {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .metric small { display: block; color: var(--muted); }
+    .metric strong { font-size: 18px; }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .navbar { padding: 16px 5%; }
+      .hero, .section { padding-left: 5%; padding-right: 5%; }
+    }
+
+    @media (max-width: 560px) {
+      .navbar { align-items: flex-start; flex-direction: column; gap: 12px; }
+      .nav-links { width: 100%; gap: 18px; flex-wrap: wrap; font-size: 13px; }
+      .hero { padding-top: 52px; padding-bottom: 52px; }
+      .hero p { font-size: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      .card { padding: 20px; }
+      .status-panel { align-items: flex-start; flex-direction: column; }
+      .metrics { gap: 18px; }
+      .section { padding-top: 40px; padding-bottom: 40px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="navbar">
+    <a class="brand" href="#">☸ Kube<span>Flow</span></a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="#status">Status</a>
+      <a href="#status" class="button">View Status</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-content">
+        <span class="tag">CONTAINERIZED · AUTOMATED · SCALABLE</span>
+        <h1>Modern DevOps.<br>Powered by Kubernetes.</h1>
+        <p>
+          A responsive web application built with Docker and Kubernetes,
+          designed to demonstrate automated delivery and cloud-native practices.
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="#features">Explore Project ↓</a>
+          <a class="button secondary" href="#status">Application Status</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-heading">
+        <h2>Our Technology Stack</h2>
+        <p>Tools used to build and deploy this DevOps project.</p>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="card-icon">🐳</div>
+          <h3>Docker</h3>
+          <p>Packages the application into a portable container image.</p>
+        </article>
+
+        <article class="card">
+          <div class="card-icon">☸️</div>
+          <h3>Kubernetes</h3>
+          <p>Manages application Pods, deployments, and scaling.</p>
+        </article>
+
+        <article class="card">
+          <div class="card-icon">⚙️</div>
+          <h3>GitHub Actions</h3>
+          <p>Automates code validation, testing, and image building.</p>
+        </article>
+
+        <article class="card">
+          <div class="card-icon">🔄</div>
+          <h3>GitOps</h3>
+          <p>Planned extension for declarative continuous delivery.</p>
+        </article>
+      </div>
+
+      <div class="status-panel" id="status">
+        <div>
+          <div class="status-title">Application Overview</div>
+          <p class="status-message">
+            This page is served by NGINX inside a Docker container.
+          </p>
+          <p style="margin-top: 12px">
+            <span class="status-badge">● Web page loaded</span>
+          </p>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <small>Namespace</small>
+            <strong>cicd-project</strong>
+          </div>
+          <div class="metric">
+            <small>Image</small>
+            <strong>v1</strong>
+          </div>
+          <div class="metric">
+            <small>Platform</small>
+            <strong>Kubernetes</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    KubeFlow DevOps Project · Built with Docker, Kubernetes and automation
+  </footer>
+</body>
+</html>
