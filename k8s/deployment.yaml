@@ -21,8 +21,8 @@ spec:
     spec:
       containers:
         - name: web-app
-          image: k8s-cicd-app:v2
-          imagePullPolicy: IfNotPresent
+          image: sanjitbhagat2026/k8s-cicd-app:latest
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 80
