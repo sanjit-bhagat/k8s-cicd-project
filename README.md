@@ -1,229 +1,218 @@
 # Automated Kubernetes CI/CD Pipeline
 
-An end-to-end DevOps project that automates application testing, Docker image building, publishing to Docker Hub, and deployment to a local Kubernetes cluster using GitHub Actions.
+A DevOps project that automates the build, publish, and deployment of a web application using Docker, GitHub Actions, Docker Hub, and Kubernetes.
 
-## Project Overview
+## 📌 Project Overview
 
-This project demonstrates how to automate the deployment of a web application using a CI/CD pipeline. Whenever code is pushed to the `main` branch, GitHub Actions builds and tests the application, pushes the Docker image to Docker Hub, and deploys the new version to Kubernetes.
+This project demonstrates how to build a Dockerized web application, publish the image to Docker Hub, and deploy it to a local Kubernetes cluster using a GitHub Actions CI/CD pipeline.
 
-## Tools & Technologies
+The application is a **KubeFlow Dashboard** built with HTML and CSS and served using Nginx.
+
+## 🛠️ Tools and Technologies
 
 - **Git & GitHub** — Source code management
-- **GitHub Actions** — CI/CD automation
 - **Docker** — Containerization
-- **Docker Hub** — Container image registry
-- **Kubernetes** — Application deployment and management
+- **Docker Hub** — Docker image registry
+- **GitHub Actions** — CI/CD automation
+- **Kubernetes** — Container orchestration
 - **Kind** — Local Kubernetes cluster
-- **NGINX** — Web server
-- **YAML** — Kubernetes and workflow configuration
-- **PowerShell** — Local Windows administration
+- **Nginx** — Web server
+- **YAML** — Workflow and Kubernetes configuration
+- **PowerShell** — Local Windows environment
 
-## Architecture
+## 🖥️ Project Screenshots
 
-```text
-Developer
-    |
-    v
-GitHub Repository
-    |
-    v
-GitHub Actions
-    |
-    v
-Build Docker Image
-    |
-    v
-Test Web Application
-    |
-    v
-Push Image to Docker Hub
-    |
-    v
-Deploy to Kubernetes
-    |
-    v
-Kubernetes Deployment
-    |
-    v
-4 Application Pods
-    |
-    v
-Kubernetes Service
-    |
-    v
-Web Application
-```
+### 1. Application Dashboard
 
-## CI/CD Workflow
+The KubeFlow Dashboard running in the browser.
 
-1. **Code Push:** A code change is pushed to the `main` branch.
-2. **Build:** GitHub Actions builds a Docker image from the application Dockerfile.
-3. **Test:** The pipeline starts a test container and checks whether the web application responds successfully.
-4. **Publish:** The Docker image is pushed to Docker Hub with a commit-specific SHA tag and a `latest` tag.
-5. **Deploy:** A self-hosted Windows runner updates the Kubernetes Deployment with the commit-specific image.
-6. **Verify:** The pipeline waits for the Kubernetes rollout to complete successfully.
+![KubeFlow Dashboard](screenshots/application-dashboard.png)
 
-## Kubernetes Features
+### 2. GitHub Actions CI/CD Pipeline
 
-- Deployment management using Kubernetes Deployments
-- Four application replicas
-- NodePort Service for application access
-- Startup, liveness, and readiness probes
-- CPU and memory requests and limits
-- Rolling updates through Kubernetes Deployments
-- Container images tagged with Git commit SHA for version tracking
+The GitHub Actions workflow successfully completed.
 
-## Project Structure
+![GitHub Actions Success](screenshots/github-actions-success.png)
+
+### 3. Kubernetes Deployment
+
+All four application pods running successfully in the `cicd-project` namespace.
+
+![Kubernetes Pods Running](screenshots/kubernetes-pods.png)
+
+## 🏗️ Project Architecture
+
+1. Developer pushes code to the GitHub repository.
+2. GitHub Actions starts the CI/CD workflow.
+3. The workflow builds the Docker image.
+4. The image is published to Docker Hub.
+5. The deployment job updates the Kubernetes Deployment.
+6. Kubernetes maintains four application replicas.
+7. The application is accessed through Kubernetes port forwarding.
+
+## ⚙️ CI/CD Workflow
+
+The GitHub Actions workflow is stored at:
+
+`.github/workflows/ci-cd.yaml`
+
+The pipeline includes:
+
+- Automated workflow execution on code changes.
+- Docker image build.
+- Image publishing to Docker Hub.
+- Deployment to the local Kind Kubernetes cluster.
+- Kubernetes rollout verification.
+
+The deployment job uses a **self-hosted Windows runner** to access the local Kubernetes cluster.
+
+## ☸️ Kubernetes Features
+
+- Deployment with four replicas.
+- Service for application access.
+- Namespace isolation using `cicd-project`.
+- Startup, liveness, and readiness probes.
+- CPU and memory resource requests and limits.
+- Rolling deployment updates through Kubernetes.
+
+## 📂 Project Structure
 
 ```text
 k8s-cicd-project/
-├── app/
-│   ├── Dockerfile
-│   └── index.html
-├── k8s/
-│   ├── namespace.yaml
-│   ├── deployment.yaml
-│   └── service.yaml
 ├── .github/
 │   └── workflows/
 │       └── ci-cd.yaml
+├── app/
+│   └── index.html
+├── k8s/
+│   ├── deployment.yaml
+│   └── service.yaml
+├── screenshots/
+│   ├── application-dashboard.png
+│   ├── github-actions-success.png
+│   └── kubernetes-pods.png
+├── Dockerfile
 └── README.md
 ```
 
-## Prerequisites
+## 🚀 Run the Project Locally
 
-Install or configure the following:
+### Prerequisites
+
+Install and configure:
 
 - Docker Desktop
 - kubectl
 - Kind
 - Git
-- A GitHub repository
-- A Docker Hub account
-- A running self-hosted GitHub Actions runner with access to the Kind cluster
-
-## Setup Instructions
 
 ### 1. Clone the repository
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/sanjit-bhagat/k8s-cicd-project.git
 cd k8s-cicd-project
 ```
 
-### 2. Build the Docker image locally
+> This repository is private, so you must have GitHub access to clone it.
 
-Replace `YOUR_DOCKERHUB_USERNAME` with your Docker Hub username.
+### 2. Create the Kind cluster
 
-```bash
-docker build -t YOUR_DOCKERHUB_USERNAME/k8s-cicd-app:latest ./app
-```
-
-### 3. Create the Kubernetes cluster
-
-If you do not already have a Kind cluster:
+If the cluster does not already exist:
 
 ```bash
 kind create cluster --name devops-cluster
 ```
 
-### 4. Apply the Kubernetes manifests
+### 3. Create the Kubernetes namespace
 
 ```bash
-kubectl apply -f k8s/namespace.yaml
+kubectl create namespace cicd-project
+```
+
+If the namespace already exists, you can skip this step.
+
+### 4. Deploy the application
+
+```bash
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 ```
 
-### 5. Configure GitHub Actions secrets
+Check the deployment:
 
-Add the following repository secrets under **Settings → Secrets and variables → Actions**:
+```bash
+kubectl get pods -n cicd-project
+kubectl get deployments -n cicd-project
+kubectl get services -n cicd-project
+```
+
+Wait for the rollout:
+
+```bash
+kubectl rollout status deployment/web-app -n cicd-project
+```
+
+### 5. Access the application
+
+```bash
+kubectl port-forward service/web-app-service 8080:80 -n cicd-project
+```
+
+Open the following URL in your browser:
+
+`http://localhost:8080`
+
+Keep the PowerShell terminal running while accessing the application.
+
+## 🔐 GitHub Secrets
+
+Configure these repository secrets under **Settings → Secrets and variables → Actions**:
 
 | Secret | Purpose |
 |---|---|
 | `DOCKERHUB_USERNAME` | Docker Hub username |
 | `DOCKERHUB_TOKEN` | Docker Hub access token |
 
-Never commit access tokens or passwords to the repository.
+Never commit access tokens or other credentials to the repository.
 
-### 6. Configure the self-hosted runner
+## 🏃 Self-Hosted Runner
 
-Configure a self-hosted Windows runner with the labels used by the workflow:
+The deployment job uses a Windows self-hosted runner with access to the local Kind cluster.
 
-```text
-self-hosted
-Windows
-X64
-```
+For automatic deployment to work:
 
-Ensure the runner can access the correct Kind Kubernetes context and execute `kubectl`.
+- The runner must be online.
+- Docker Desktop and the Kind cluster must be running.
+- `kubectl` must be configured for the correct cluster context.
+- The runner must have the required permissions.
 
-### 7. Trigger the pipeline
+The runner can be unavailable when your computer is switched off or asleep.
 
-Push a change to the `main` branch:
+## 📚 What I Learned
 
-```bash
-git add .
-git commit -m "Update web application"
-git push origin main
-```
+- Building and running Docker images.
+- Publishing container images to Docker Hub.
+- Creating GitHub Actions CI/CD workflows.
+- Deploying applications to Kubernetes.
+- Managing Deployments, Services, and namespaces.
+- Configuring health probes and resource limits.
+- Automating application updates.
+- Troubleshooting CI/CD and Kubernetes deployment issues.
 
-Open the **Actions** tab in GitHub to monitor the workflow.
+## 🔮 Future Improvements
 
-## Verification Commands
+- Add automated application tests.
+- Add monitoring and logging.
+- Deploy to a cloud Kubernetes service.
+- Configure Ingress and HTTPS.
+- Improve security and image scanning.
 
-Check the Kubernetes Deployment:
-
-```bash
-kubectl get deployment web-app -n cicd-project
-```
-
-Check application pods:
-
-```bash
-kubectl get pods -n cicd-project
-```
-
-Check the Service:
-
-```bash
-kubectl get services -n cicd-project
-```
-
-Check the deployed image:
-
-```bash
-kubectl get deployment web-app -n cicd-project -o jsonpath="{.spec.template.spec.containers[0].image}"
-```
-
-Check rollout status:
-
-```bash
-kubectl rollout status deployment/web-app -n cicd-project
-```
-
-## Key Learning Outcomes
-
-- Built an automated CI/CD pipeline with GitHub Actions
-- Containerized a web application using Docker
-- Published versioned images to Docker Hub
-- Deployed an application to Kubernetes using a self-hosted runner
-- Configured Kubernetes health probes and resource limits
-- Verified rolling deployments and application pod health
-- Practiced troubleshooting workflow syntax and deployment issues
-
-## Future Improvements
-
-- Add automated unit tests
-- Add monitoring with Prometheus and Grafana
-- Add centralized logging
-- Add security scanning for Docker images
-- Deploy to a managed Kubernetes service such as Amazon EKS
-- Add infrastructure provisioning with Terraform
-
-## Author
+## 👨‍💻 Author
 
 **Sanjit Bhagat**
 
-Aspiring DevOps Engineer
+BSc Information Technology | Aspiring DevOps Engineer
 
+[GitHub](https://github.com/sanjit-bhagat)
+
+[LinkedIn](https://linkedin.com/in/sanjit-bhagat-39a9302a7/)
