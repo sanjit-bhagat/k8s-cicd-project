@@ -7,8 +7,11 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-test:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,12 +27,21 @@ jobs:
           test -f k8s/service.yaml
           echo "All required files exist."
 
-      - name: Build Docker image
-        run: docker build -t k8s-cicd-app:${{ github.sha }} ./app
-
-      - name: Start and test web application
+      - name: Set up Docker image name
         run: |
-          docker run -d --name web-test -p 8080:80 k8s-cicd-app:${{ github.sha }}
+          echo "IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/k8s-cicd-app" >> "$GITHUB_ENV"
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t "$IMAGE_NAME:${GITHUB_SHA}" \
+            -t "$IMAGE_NAME:latest" \
+            ./app
+
+      - name: Test web application
+        run: |
+          docker run -d --name web-test \
+            -p 8080:80 "$IMAGE_NAME:${GITHUB_SHA}"
 
           for attempt in {1..10}; do
             if curl -fsS http://localhost:8080/ > /dev/null; then
@@ -44,3 +56,15 @@ jobs:
           docker rm -f web-test
           exit 1
 
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push "$IMAGE_NAME:${GITHUB_SHA}"
+          docker push "$IMAGE_NAME:latest"
