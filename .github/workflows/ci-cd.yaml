@@ -143,4 +143,4 @@ jobs:
 
           kubectl get deployment web-app -n cicd-project
           kubectl get pods -n cicd-project
-m6
+
