@@ -84,14 +84,14 @@ jobs:
 
     steps:
       - name: Check Kubernetes access
-        shell: pwsh
+        shell: powershell
         run: |
           kubectl config current-context
           kubectl get nodes
           kubectl get deployment web-app -n cicd-project
 
       - name: Deploy image to Kind
-        shell: pwsh
+        shell: powershell
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG: ${{ github.sha }}
