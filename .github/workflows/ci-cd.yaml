@@ -3,9 +3,11 @@ name: Kubernetes CI Pipeline
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -27,9 +29,16 @@ jobs:
           test -f k8s/service.yaml
           echo "All required files exist."
 
-      - name: Set up Docker image name
+      - name: Validate Docker Hub username
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          echo "IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/k8s-cicd-app" >> "$GITHUB_ENV"
+          if [ -z "$DOCKERHUB_USERNAME" ]; then
+            echo "Error: DOCKERHUB_USERNAME secret is missing."
+            exit 1
+          fi
+
+          echo "IMAGE_NAME=${DOCKERHUB_USERNAME,,}/k8s-cicd-app" >> "$GITHUB_ENV"
 
       - name: Build Docker image
         run: |
