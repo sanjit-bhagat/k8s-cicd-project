@@ -29,12 +29,12 @@ jobs:
           test -f k8s/service.yaml
           echo "All required files exist."
 
-      - name: Set up image name
+      - name: Validate Docker Hub username
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           if [ -z "$DOCKERHUB_USERNAME" ]; then
-            echo "Docker Hub username is missing."
+            echo "DOCKERHUB_USERNAME secret is missing."
             exit 1
           fi
           echo "IMAGE_NAME=${DOCKERHUB_USERNAME,,}/k8s-cicd-app" >> "$GITHUB_ENV"
@@ -84,14 +84,19 @@ jobs:
 
     steps:
       - name: Check Kubernetes access
-        shell: powershell
+        shell: powershell -ExecutionPolicy Bypass
         run: |
           kubectl config current-context
+          if ($LASTEXITCODE -ne 0) { throw "Cannot read Kubernetes context." }
+
           kubectl get nodes
+          if ($LASTEXITCODE -ne 0) { throw "Cannot access Kubernetes nodes." }
+
           kubectl get deployment web-app -n cicd-project
+          if ($LASTEXITCODE -ne 0) { throw "Deployment web-app was not found." }
 
       - name: Deploy image to Kind
-        shell: powershell
+        shell: powershell -ExecutionPolicy Bypass
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           IMAGE_TAG: ${{ github.sha }}
@@ -106,12 +111,14 @@ jobs:
             throw "Could not find the web-app container."
           }
 
+          Write-Host "Deploying image: $image"
+
           kubectl set image deployment/web-app `
             -n cicd-project `
             "$($containerName)=$image"
 
           if ($LASTEXITCODE -ne 0) {
-            throw "Failed to update the Deployment image."
+            throw "Failed to update Deployment image."
           }
 
           kubectl rollout status deployment/web-app `
@@ -122,4 +129,5 @@ jobs:
             throw "Kubernetes rollout failed."
           }
 
+          kubectl get deployment web-app -n cicd-project
           kubectl get pods -n cicd-project
